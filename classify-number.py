@@ -10,9 +10,9 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for simplicity
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET"],
     allow_headers=["*"],
 )
 
@@ -34,7 +34,7 @@ async def bad_request_handler(request, exc):
     if exc.status_code == 400:
         return JSONResponse(
             status_code=400,
-            content=exc.detail,  # Send the custom detail passed in the exception
+            content=exc.detail,  
         )
     raise exc
 
