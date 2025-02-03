@@ -57,6 +57,7 @@ def is_perfect(n: int) -> bool:
 
 def is_armstrong(n: int) -> bool:
     """Check if a number is an Armstrong number."""
+    n = abs(n)  
     digits = [int(d) for d in str(n)]
     num_digits = len(digits)
     return sum(d ** num_digits for d in digits) == n
@@ -82,7 +83,7 @@ async def classify_number(number: int = Query(..., description="The number to cl
                 "error": True,
             }
         )
-    number = abs(number)
+    # number = abs(number)
     properties = []
     if is_armstrong(number):
         properties.append("armstrong")
