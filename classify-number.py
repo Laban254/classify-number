@@ -82,6 +82,14 @@ async def classify_number(number: int = Query(..., description="The number to cl
             }
         )
 
+    if number is None:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "number": number,
+                "error": True,
+            }
+        )
     properties = []
     if is_armstrong(number):
         properties.append("armstrong")
