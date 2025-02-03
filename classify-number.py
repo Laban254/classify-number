@@ -1,20 +1,10 @@
 from fastapi import FastAPI, Query, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+import requests
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-import httpx
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Utility functions
 def is_prime(n: int) -> bool:
     if n < 2:
         return False
@@ -24,59 +14,60 @@ def is_prime(n: int) -> bool:
     return True
 
 def is_perfect(n: int) -> bool:
-    divisors_sum = sum(i for i in range(1, n) if n % i == 0)
-    return divisors_sum == n
+    if n < 2:
+        return False
+    sum_divisors = sum(i for i in range(1, n) if n % i == 0)
+    return sum_divisors == n
 
 def is_armstrong(n: int) -> bool:
     digits = [int(d) for d in str(n)]
-    return sum(d ** len(digits) for d in digits) == n
+    num_digits = len(digits)
+    return sum(d ** num_digits for d in digits) == n
+
+def get_fun_fact(n: int) -> str:
+    url = f"http://numbersapi.com/{n}/math"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.text
+    return "No fun fact available."
 
 @app.get("/api/classify-number")
 async def classify_number(number: int = Query(..., description="The number to classify")):
     if number < 0:
         raise HTTPException(status_code=400, detail="Number must be non-negative")
+    if not isinstance(number, int):
+        raise HTTPException(status_code=400, detail={"number": str(number), "error": True})
 
-    # Determine properties of the number
-    prime = is_prime(number)
-    perfect = is_perfect(number)
-    armstrong = is_armstrong(number)
-    properties = [
-        "prime" if prime else None,
-        "perfect" if perfect else None,
-        "armstrong" if armstrong else None,
-        "even" if number % 2 == 0 else "odd",
-    ]
-    properties = [prop for prop in properties if prop is not None]
+    properties = []
+    if is_armstrong(number):
+        properties.append("armstrong")
+    if number % 2 == 0:
+        properties.append("even")
+    else:
+        properties.append("odd")
+
     digit_sum = sum(int(d) for d in str(number))
-
-    # Fetch fun fact from Numbers API
-    async with httpx.AsyncClient() as client:
-        fun_fact_response = await client.get(f"http://numbersapi.com/{number}/math")
-        fun_fact = (
-            fun_fact_response.text if fun_fact_response.status_code == 200 else "No fun fact available."
-        )
+    fun_fact = get_fun_fact(number)
 
     return {
         "number": number,
-        "is_prime": prime,
-        "is_perfect": perfect,
+        "is_prime": is_prime(number),
+        "is_perfect": is_perfect(number),
         "properties": properties,
         "digit_sum": digit_sum,
-        "fun_fact": fun_fact,
+        "fun_fact": fun_fact
     }
 
-# Custom error handler for validation errors
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
     return JSONResponse(
-        status_code=400,
+        status_code=422,
         content={
             "number": request.query_params.get("number", "invalid_input"),
             "error": True,
         }
     )
 
-# Error handling for 400 Bad Request
 @app.exception_handler(HTTPException)
 async def bad_request_handler(request, exc):
     if exc.status_code == 400:
@@ -88,3 +79,6 @@ async def bad_request_handler(request, exc):
             }
         )
     raise exc
+
+
+
