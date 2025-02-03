@@ -32,6 +32,9 @@ def is_armstrong(n: int) -> bool:
 
 @app.get("/api/classify-number")
 async def classify_number(number: int = Query(...)):
+    if number is None:
+        raise HTTPException(status_code=400, detail="Query parameter 'number' is required")
+    
     if number < 0:
         raise HTTPException(status_code=400, detail="Number must be non-negative")
 
