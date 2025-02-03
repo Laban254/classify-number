@@ -73,18 +73,15 @@ def get_fun_fact(n: int) -> str:
 @app.get("/api/classify-number")
 async def classify_number(number: int = Query(..., description="The number to classify")):
     """Classify a number and return its mathematical properties."""
-    # Validate input (negative numbers will raise HTTPException)
     if number < 0:
         raise HTTPException(
             status_code=400,
             detail={
-                "number": str(number),
+                "number": number,
                 "error": True,
-                # "message": "Negative numbers are not allowed.",
             }
         )
 
-    # Determine the number's properties
     properties = []
     if is_armstrong(number):
         properties.append("armstrong")
@@ -96,7 +93,7 @@ async def classify_number(number: int = Query(..., description="The number to cl
     digit_sum = sum(int(d) for d in str(number))
     fun_fact = get_fun_fact(number)
 
-    # Construct the response
+
     return {
         "number": number,
         "is_prime": is_prime(number),
