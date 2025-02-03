@@ -73,14 +73,6 @@ def get_fun_fact(n: int) -> str:
 @app.get("/api/classify-number")
 async def classify_number(number: int = Query(..., description="The number to classify")):
     """Classify a number and return its mathematical properties."""
-    if number < 0:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "number": number,
-                "error": True,
-            }
-        )
 
     if number is None:
         raise HTTPException(
@@ -90,6 +82,7 @@ async def classify_number(number: int = Query(..., description="The number to cl
                 "error": True,
             }
         )
+    number = abs(number)
     properties = []
     if is_armstrong(number):
         properties.append("armstrong")
@@ -98,7 +91,7 @@ async def classify_number(number: int = Query(..., description="The number to cl
     else:
         properties.append("odd")
 
-    digit_sum = sum(int(d) for d in str(number))
+    digit_sum = sum(int(d) for d in str(abs(number)))
     fun_fact = get_fun_fact(number)
 
 
